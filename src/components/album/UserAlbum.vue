@@ -8,6 +8,7 @@
 <template>
   <div class="album-container">
     <div class="menu-container">
+<!--      -->
       <el-tabs style="margin-left: 20px" v-model="activeName" :before-leave="leaveTabs" @tab-click="tabsClick">
         <el-tab-pane label="相册" name="0">
           <div class="img_container">
