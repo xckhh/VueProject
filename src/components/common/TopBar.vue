@@ -118,6 +118,7 @@ export default {
           if (item.data.meta.status !== 200){
             return  callback(new Error('用户名已被占用!'))
           }
+          return callback()
         })
     }
     return {
@@ -261,10 +262,14 @@ export default {
     },
     // 注册
     registerClick() {
+      console.log('ssss')
       this.$refs.registerFormRef.validate(async valid => {
+        console.log('3333')
         if (!valid) {
+          console.log('1111')
           return null
         }
+        console.log('2222')
         this.registerFormData.region = ''
         // 因为下拉框选中的值为数组 所以转为字符串
         for (let i=0; i<this.registerFormData.address.length; i++) {
@@ -276,7 +281,7 @@ export default {
         }
         this.$message.success('注册成功!')
         this.registerDialogVisible = false
-      } )
+      })
     },
     // 注册弹框关闭时清除数据
     removeRegisterData() {

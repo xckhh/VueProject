@@ -9,15 +9,15 @@ const routes = [
   },
   {
     path: '/personCenter',
-    component: () => import('../components/personCenter/UserInfo')
+    component: () => import('../components/personCenter')
   },
   {
     path: '/album',
-    component: () => import('../components/album/UserAlbum')
+    component: () => import('../components/album')
   },
   {
     path: '/browse',
-    component: () => import('../components/browse/BrowseInte')
+    component: () => import('../components/browse')
   },
   {
     path: '/test',
