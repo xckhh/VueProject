@@ -36,6 +36,17 @@ export default new Vuex.Store({
     async getUserList(context){
       const { data: res } = await axios.get('/user/getUserList')
       return res
+    },
+    // 获取我的未读消息
+    async getUserChat(context,user_id){
+      const { data: res } = await axios.get(`/chat/${user_id}`)
+      return res
+    },
+    // 存储聊天记录
+    async insertChat(context,chatList){
+      console.log(chatList)
+      const { data: res } = await axios.post('/chat',chatList)
+      console.log(res)
     }
   },
   modules: {

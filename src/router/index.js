@@ -18,10 +18,6 @@ const routes = [
   {
     path: '/browse',
     component: () => import('../components/browse')
-  },
-  {
-    path: '/test',
-    component: () => import('../components/common/Circle')
   }
 ]
 const router = new Router({

@@ -31,9 +31,12 @@
                 <a style="margin-left: 5px;" v-if="isLoginData">{{ uname }}</a>
                 <a style="margin-left: 5px;" v-else @click="loginDialogVisible=true">{{item.value}}</a>
               </template>
-              <template v-else>
+              <template v-else-if="item.value === '注册'">
                 <a style="margin-left: 5px;" v-if="isLoginData" @click="logout">退出登录</a>
                 <a v-else @click="registerDialogVisible=true">{{item.value}}</a>
+              </template>
+              <template  v-else>
+                <a style="margin-left: 5px;" @click="chatClick"><el-badge :value="total" :max="99" class="item">{{item.value}}</el-badge></a>
               </template>
               <!--   如果不是最后一个 则在后边加上|   -->
               <span class="nav-span" v-show="index !== loginData.length - 1">|</span>
@@ -60,7 +63,7 @@
     </el-dialog>
     <!-- 注册弹框 -->
     <el-dialog :visible.sync="registerDialogVisible" width="30%" destroy-on-close @close="removeRegisterData">
-      <h2 style="margin-bottom: 5px">注册账号</h2>
+      <h2 style="margin-bottom: 5px;margin-left: 10px">注册账号</h2>
       <el-form ref="registerFormRef" :model="registerFormData" :rules="registerFormRules" label-width="80px">
         <el-form-item label="用户名" prop="username">
           <el-input prefix-icon="el-icon-user" v-model="registerFormData.username" placeholder="用户名"/>
@@ -72,7 +75,7 @@
           <el-input  prefix-icon="el-icon-phone" placeholder="手机号" v-model="registerFormData.phone" onkeyup="this.value=this.value.replace(/[\u4E00-\u9FA5]/g,'')"></el-input>
         </el-form-item>
         <div style="margin-bottom: 5px">
-          <h2 style="display: inline-block">完善资料</h2> <span style="margin: 10px;color: #c4c7cf;font-size: 8px">(注册后不可更改)</span>
+          <h2 style="display: inline-block;margin-left: 10px">完善资料</h2> <span style="margin: 10px;color: #c4c7cf;font-size: 8px">(注册后不可更改)</span>
         </div>
         <el-form-item label="姓名" prop="name">
           <el-input  prefix-icon="el-icon-s-custom" placeholder="姓名" v-model="registerFormData.name"></el-input>
@@ -93,12 +96,16 @@
         <el-button @click="registerDialogVisible = false">取 消</el-button>
       </span>
     </el-dialog>
+    <!-- 聊天弹框 -->
+    <el-drawer direction="ltr" size="50%" @close="insertChat" :with-header="false" :visible.sync="chatDialogVisible">
+      <chat :my-msg="MyMsg"/>
+    </el-drawer>
   </div>
 </template>
 
 <script>
 import cityData from "@/assets/cityData/citydata";
-import {mapActions} from "vuex"
+import Chat from "@/components/chat";
 export default {
   name: 'TopBar',
   data () {
@@ -122,6 +129,8 @@ export default {
         })
     }
     return {
+      // 我的未读消息
+      MyMsg: '',
       navsData: [
         {value: '首页',url: '/main'},
         {value: '个人中心', url: '/personCenter'},
@@ -130,11 +139,14 @@ export default {
       loginData: [
         {value: '登陆',},
         {value: '注册',},
+        {value: '消息',}
       ],
       // 登录弹框是否显示
       loginDialogVisible: false,
       // 注册弹框是否显示
       registerDialogVisible: false,
+      // 聊天弹框是否显示
+      chatDialogVisible: false,
       // 登录框数据
       loginFormData: {
         username: 'xckhh',
@@ -200,8 +212,13 @@ export default {
       // 用户名
       uname: '',
       // 城市数据
-      cityData
+      cityData,
+      // 未读消息条数
+      total: '',
     }
+  },
+  components: {
+    Chat
   },
   created() {
     this.isLoginData = window.sessionStorage.getItem('id') !== null
@@ -227,9 +244,12 @@ export default {
         window.sessionStorage.setItem('user',JSON.stringify(res.data))
         window.sessionStorage.setItem('id',res.data.id)
         window.sessionStorage.setItem('username',res.data.username)
+        window.sessionStorage.setItem('photo',res.data.photo)
         this.loginDialogVisible = false
         this.isLoginData = true
         this.uname = res.data.username
+        // 获取未读消息
+        await this.getUserChat(res.data.username)
       })
     },
     // 退出登录
@@ -262,14 +282,10 @@ export default {
     },
     // 注册
     registerClick() {
-      console.log('ssss')
       this.$refs.registerFormRef.validate(async valid => {
-        console.log('3333')
         if (!valid) {
-          console.log('1111')
           return null
         }
-        console.log('2222')
         this.registerFormData.region = ''
         // 因为下拉框选中的值为数组 所以转为字符串
         for (let i=0; i<this.registerFormData.address.length; i++) {
@@ -287,7 +303,57 @@ export default {
     removeRegisterData() {
       this.$refs.registerFormRef.resetFields()
       this.registerFormData.address = []
-    }
+    },
+    // 点击消息
+    chatClick() {
+      if (window.sessionStorage.getItem('token') === null) {
+        return this.$notify({
+          title: '提示',
+          message: '请先进行登录操作',
+          offset: 30
+        });
+      }else {
+        if (this.total === ''){
+          return this.$notify({
+            title: '提示',
+            message: '暂无消息',
+            offset: 30
+          });
+        }
+        this.total = ''
+        this.chatDialogVisible = true
+      }
+    },
+    // 获取未读信息 并标记为已读
+    getUserChat(username) {
+      this.$store.dispatch('getUserChat',username).then(res => {
+        this.MyMsg= res.data
+        window.sessionStorage.setItem('another_username',this.MyMsg[0].another_username)
+        this.total = this.MyMsg.length
+      })
+      this.$http.get(`/chat/update/${username}`)
+    },
+    // 关闭聊天框将我发送的聊天数据存储
+    insertChat() {
+      const dataList = []
+      // console.log('ssss'+window.sessionStorage.getItem('chat'))
+      if ( JSON.parse(window.sessionStorage.getItem('chat')) === null){
+        // this.$http.post('/chat/insertUserChat',dataList)
+        return null
+      } else{
+        JSON.parse(window.sessionStorage.getItem('chat')).forEach(item => {
+          let data = {
+            username: window.sessionStorage.getItem('another_username'),
+            another_username: window.sessionStorage.getItem('username'),
+            text: item.text.text,
+            date: item.date,
+            isRead: 0
+          }
+          dataList.push(data)
+        })
+        this.$http.post('/chat/insertUserChat',dataList)
+      }
+    },
   },
   computed: {
   },
@@ -327,6 +393,12 @@ export default {
     }
   }
 }
+/deep/ .el-badge__content.is-fixed {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  transform: translateY(15%) translateX(130%);
+}
 /deep/ .el-dialog__body {
   padding: 0px 20px;
 }
@@ -365,5 +437,9 @@ export default {
   .el-input{
     width: 85%;
   }
+
+}
+/deep/ .ChatBox{
+  margin-bottom: 30px;
 }
 </style>

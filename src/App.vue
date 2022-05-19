@@ -1,6 +1,6 @@
 <template>
     <div class="index-page">
-      <test></test>
+      <my-circle></my-circle>
       <top-bar></top-bar>
       <div style="margin-bottom: 50px"></div>
 <!--      <top-header></top-header>-->

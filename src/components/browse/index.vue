@@ -24,7 +24,7 @@
       </div>
     <!--   右侧信息区域   -->
       <div class="user-info">
-        <h2 style="margin: 20px 0 20px 20px;color: #ffb366">{{ username }}</h2>
+        <h2 style="margin: 20px 0 20px 20px;color: #ffb366">{{ userData.name }}</h2>
         <el-descriptions title="" direction="horizontal" :column="3" border :labelStyle="labStyle">
           <el-descriptions-item label="姓名" contentStyle="width:130px">{{ userData.name }}</el-descriptions-item>
           <el-descriptions-item label="性别" >{{ userData.gender }}</el-descriptions-item>
@@ -50,13 +50,14 @@
           </el-descriptions-item>
         </el-descriptions>
         <div class="bottom-btn">
+          <el-button type="primary" round @click="chatDialogVisible=true">聊天</el-button>
           <el-button type="primary" icon="el-icon-star-on" round v-if="isBeckoning" @click="isBeckoning=false">已关注</el-button>
           <el-button type="primary" icon="el-icon-star-off" round v-else @click="isBeckoning=true" style="width: 108px">关注</el-button>
           <el-button type="info" round @click="goMain" >退出</el-button>
         </div>
       </div>
     </div>
-  <!--  底部相册  -->
+    <!--  底部相册  -->
     <div class="album-container">
       <div class="album" v-for="(item,index) in albumData" :key="index">
         <a style="width: 115px;height: 115px;display: inline-block;" href="#" @click="getPhotoList(item.album_id)">
@@ -65,10 +66,16 @@
         </a>
       </div>
     </div>
+    <!--  聊天弹框  -->
+    <el-drawer direction="ltr" size="50%" :with-header="false" @close="insertChat" :visible.sync="chatDialogVisible">
+      <chat :my-msg="userData.id" :another_id="id"/>
+    </el-drawer>
   </div>
 </template>
 
 <script>
+import Chat from "@/components/chat";
+
 export default {
   name: "browseInte",
   created() {
@@ -76,6 +83,10 @@ export default {
     this.getPersonalData()
     this.getAlbum()
     this.getPhotoList(this.$route.query.album_id)
+    this.id = window.sessionStorage.getItem('id')
+  },
+  components: {
+    Chat
   },
   data() {
     return{
@@ -83,6 +94,8 @@ export default {
       album_id: '',
       // 是否已经关注
       isBeckoning: false,
+      // 是否开启聊天
+      chatDialogVisible: false,
       // label样式
       labStyle: {
         fontSize: '16px',
@@ -99,10 +112,26 @@ export default {
       // 照片集合
       photoList: [],
       imgUrl: '',
-      username: window.sessionStorage.getItem('username')
+      // 我的id
+      id: ''
     }
   },
   methods: {
+    // 关闭聊天框将我发送的聊天数据存储
+    insertChat() {
+      const dataList = []
+      JSON.parse(window.sessionStorage.getItem('chat')).forEach(item => {
+        let data = {
+          username: this.userData.username,
+          another_username: window.sessionStorage.getItem('username'),
+          text: item.text.text,
+          date: item.date,
+          isRead: 0
+        }
+        dataList.push(data)
+      })
+      this.$http.post('/chat/insertUserChat',dataList)
+    },
     // 通过id获取用户信息
     getUserById() {
       const result = this.$store.dispatch('getUserById',this.$route.query.id)

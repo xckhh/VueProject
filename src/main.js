@@ -21,8 +21,13 @@ import AllPartner from './components/home/AllPartner'
 Vue.component(AllPartner.name,AllPartner)
 import SiteFooter from "@/components/common/SiteFooter";
 Vue.component(SiteFooter.name,SiteFooter)
-import Circle from "@/components/common/Circle";
-Vue.component(Circle.name,Circle)
+import MyCircle from "@/components/common/Circle";
+Vue.component(MyCircle.name,MyCircle)
+// import chat from "@/components/chat";
+// Vue.component(chat.name,chat)
+//聊天室-基于element
+import Chat from 'jwchat';
+Vue.use(Chat)
 // 全局设置 elementUI的$message的默认显示时间
 const messages = ['success', 'warning', 'info', 'error'];
 messages.forEach(type => {
@@ -43,6 +48,7 @@ Vue.use(ElementUI)
 
 
 Vue.config.productionTip = false
+axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 axios.defaults.baseURL = 'http://localhost:8099/'
 // 拦截器
 axios.interceptors.request.use(config => {
@@ -50,7 +56,7 @@ axios.interceptors.request.use(config => {
   // 必须return config
   return config
 })
-// 全局过滤器 将毫秒转换为年月日
+// 时间过滤器
 Vue.filter('dateFormat', function (originVal) {
   const dt = new Date(originVal)
   const y = dt.getFullYear()
